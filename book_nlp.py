@@ -1,155 +1,150 @@
+import pandas as pd
+import re
+import os
 from booknlp.booknlp import BookNLP
+
+###########################
+# PART 1: Run BookNLP
+###########################
 
 # Define model parameters
 model_params = {
     "pipeline": "entity,quote,supersense,event,coref",
-    "model": "big" # Small may be an improvement in accuracy too!
+    "model": "big"  # You can also try "small" if accuracy improves
 }
 
 # Initialize BookNLP with the English language model and parameters
 booknlp = BookNLP("en", model_params)
 
-# Define input and output paths
+# Define input and output paths for BookNLP processing
 input_file = "/yunity/arusty/SoundScribe/text_files/chapter4.txt"
-output_dir = "/yunity/arusty/SoundScribe/book_files"
+output_dir_bnlp = "/yunity/arusty/SoundScribe/book_files"
 book_id = "lotl-chapter4"
 
-# Process the book
-booknlp.process(input_file, output_dir, book_id)
+# Process the book (this generates files in output_dir_bnlp)
+booknlp.process(input_file, output_dir_bnlp, book_id)
 
-"""-------------------------  BUILD FILES   -------------------------"""
-import pandas as pd
-import re
-import os
+###########################
+# PART 2: Build Coreference Mapping from Entities
+###########################
 
+# File paths for BookNLP outputs
+entities_file = f"{output_dir_bnlp}/{book_id}.entities"   # Entities file from BookNLP
+quotes_file   = f"{output_dir_bnlp}/{book_id}.quotes"       # Quotes file from BookNLP
 
-def refine_speaker(speaker, coref_mapping):
-    # If the speaker is a pronoun, try to look up a better name
-    pronouns = {"he", "his", "she", "her", "they", "their", "my"}
-    if speaker.lower() in pronouns:
-        # Look up a better name from the coreference mapping; for example:
-        return coref_mapping.get(speaker.lower(), speaker)
-    return speaker
-
-
-# File paths
-original_text_file = "/yunity/arusty/SoundScribe/text_files/chapter4.txt"  # Replace with your actual input text file
-book_title = "lotl-chapter4"  # Replace with your actual book title
-output_dir = "book-text-info/" + book_title + "/" # Adjust if needed
-audio_text_file = output_dir + book_title + "-book-audio-text.txt"
-character_dialogue_file = output_dir + book_title + "-character-dialogue.txt"
-quotes_file = "book_files/" + book_title + ".quotes"  # Replace with your actual quotes file
-entities_file = "book_files/" + book_title + ".entities"  # Replace with your actual quotes file
-
-# ----------------------
-# Step 1: Build the Resolved Mapping from Entities
-# ----------------------
-# Load the entities file (assuming it's tab-separated)
+# Load the entities file (assumes tab-separated and with headers or consistent column order)
+# Expected columns: COREF, start_token, end_token, prop, cat, text
 entities_df = pd.read_csv(entities_file, sep="\t")
 
-# Filter for person entities (where 'cat' equals "PER")
+# Filter for person entities (cat == "PER")
 person_entities = entities_df[entities_df["cat"] == "PER"].copy()
-
-# Sort entities by token position if needed (here using 'start_token')
+# Sort by start_token to process in natural order
 person_entities = person_entities.sort_values(by=["start_token"])
 
-# Build an initial mapping: use the 'COREF' column as the key and the 'text' column as the name.
-# We convert the COREF value to a string.
-initial_map = {}
+# Build a mapping: For each unique COREF, collect all mentions.
+from collections import defaultdict
+
+coref_mentions = defaultdict(list)
 for _, row in person_entities.iterrows():
-    entity_id = str(row["COREF"])
-    entity_text = row["text"]
-    # Prefer proper names (if entity_text is title-cased) over pronouns or descriptions
-    if entity_id in initial_map:
-        if not entity_text.istitle():
-            continue  # Skip if we already have a proper name for this ID
-    initial_map[entity_id] = entity_text
+    entity_id = str(row["COREF"])  # Use COREF as the unique ID
+    mention_text = row["text"]
+    coref_mentions[entity_id].append(mention_text)
 
-# Optionally, you can print the initial mapping for debugging:
-print("Initial Mapping:")
-print(initial_map)
+# Now, build a refined mapping that picks the best (most frequent proper) name per entity.
+resolved_map = {}
+for entity_id, mentions in coref_mentions.items():
+    # Filter for proper names (using istitle() as a heuristic)
+    proper_names = [m for m in mentions if m.istitle()]
+    if proper_names:
+        # Use the most frequent proper name
+        resolved_map[entity_id] = max(set(proper_names), key=proper_names.count)
+    else:
+        # Fall back to the most frequent mention overall
+        resolved_map[entity_id] = max(set(mentions), key=mentions.count)
 
-# Now, if you wish to backfill or override less informative labels with later, better ones,
-# you can simply use the initial_map as your resolved mapping.
-resolved_map = initial_map
+print("Final Coreference Mapping:")
+print(resolved_map)
 
-# ----------------------
-# Step 2: Load Quotes and Map Speaker IDs to Resolved Names
-# ----------------------
-# Load quotes file; assume it's tab-separated with two columns: Quote and char_id.
+###########################
+# PART 3: Process Quotes and Build Output Files
+###########################
+
+# Load the quotes file.
+# Adjust the separator and header as needed.
+# Here we assume the quotes file has a header with at least columns:
+# "quote", "char_id", "quote_start", "quote_end"
 quotes_df = pd.read_csv(quotes_file, sep="\t", header=0)
 
-# Convert char_id to string for proper matching
+# Convert char_id to string for mapping
 quotes_df["char_id"] = quotes_df["char_id"].astype(str)
 
-# Map char_id to real character names using our resolved_map.
+# Map char_id to resolved character names using our refined mapping.
 quotes_df["Resolved Speaker"] = quotes_df["char_id"].map(resolved_map)
-quotes_df["Resolved Speaker"] = quotes_df["Resolved Speaker"].apply(lambda sp: refine_speaker(sp, coref_mapping))
 
+# (Optional) Define a further refinement function in case the resolved name is still a pronoun.
+def refine_speaker(speaker, coref_map):
+    pronouns = {"he", "his", "she", "her", "they", "their", "my"}
+    if speaker and speaker.lower() in pronouns:
+        return coref_map.get(speaker.lower(), speaker)
+    return speaker
 
-# Optionally, check if there are any unmapped IDs (should be empty if all mapped correctly)
-unmapped = quotes_df[quotes_df["Resolved Speaker"].isna()]
-print("Unmapped Speaker IDs:", unmapped["char_id"].unique())
+# If you have additional coreference information, you could update the speakers.
+# For now, we'll use the resolved_map result directly.
+quotes_df["Resolved Speaker"] = quotes_df["Resolved Speaker"].fillna("Unknown")
 
 # ----------------------
-# Step 3: Create File 1 – Character Dialogue File
+# File 1: Create Character Dialogue File
 # ----------------------
-# Build a dictionary mapping each resolved speaker to a list of their quotes.
+# Build a dictionary mapping each speaker to a list of their quotes.
 character_quotes = {}
 for _, row in quotes_df.iterrows():
-    speaker = row["Resolved Speaker"] if pd.notna(row["Resolved Speaker"]) else "Unknown"
+    speaker = row["Resolved Speaker"]
     quote = row["quote"]
     if speaker not in character_quotes:
         character_quotes[speaker] = []
-    character_quotes[speaker].append(f'{quote} | ')
+    character_quotes[speaker].append(f'"{quote}"')
 
-# Ensure the output directory exists
+# Define output directory for our files
+output_dir = f"book-text-info/{book_id}/"
 os.makedirs(output_dir, exist_ok=True)
+character_dialogue_file = f"{output_dir}{book_id}-character-dialogue.txt"
 
-# Write the character dialogue file
+# Write the character dialogue file.
 with open(character_dialogue_file, "w", encoding="utf-8") as f:
     for character, quotes in character_quotes.items():
         f.write(f"{character}: {' '.join(quotes)}\n")
 
-# Ensure that the quotes are processed in order of their starting offsets
-quotes_df = quotes_df.sort_values(by="quote_start")
-
-# Extract the list of resolved speakers and quotes
-resolved_speakers = quotes_df["Resolved Speaker"].tolist()
-quote_texts = quotes_df["quote"].tolist()
-
-# For debugging: print the list of speakers
-print("Resolved Speakers:", resolved_speakers)
-
-# Read the original text
+# ----------------------
+# File 2: Create Annotated Text File
+# ----------------------
+# Read the original text.
+original_text_file = "/yunity/arusty/SoundScribe/text_files/chapter4.txt"
 with open(original_text_file, "r", encoding="utf-8") as f:
     text = f.read()
 
-# Define a regex pattern to match quotes (both straight and smart quotes)
+# We'll use a regex-based method to find quotes in the text.
+# We assume quotes are enclosed in either straight or smart quotes.
 pattern = r'(["“][^"”]+["”])'
 
-# Create iterators for the resolved speakers and (optionally) the quote texts
+# Extract the list of resolved speakers from the quotes file, in order.
+# (We assume that the quotes appear in the text in the same order as in the quotes_df.)
+resolved_speakers = quotes_df["Resolved Speaker"].tolist()
+
+# Create an iterator for the resolved speakers.
 speaker_iter = iter(resolved_speakers)
-# If you want to compare the matched quote with the expected one, you can also use quote_iter:
-# quote_iter = iter(quote_texts)
 
 def replacer(match):
-    # Get the next speaker from our iterator (if available)
     try:
         speaker = next(speaker_iter)
     except StopIteration:
         speaker = "Unknown"
-    # Matched quote (including the surrounding quotes)
     matched_quote = match.group(0)
-    # Return the speaker tag followed by the matched quote
     return f"</{speaker}> {matched_quote}"
 
-# Use re.sub with our replacer function
 annotated_text = re.sub(pattern, replacer, text, count=0)
 
-# Save the annotated text to the output file
-os.makedirs(os.path.dirname(audio_text_file), exist_ok=True)
+audio_text_file = f"{output_dir}{book_id}-book-audio-text.txt"
 with open(audio_text_file, "w", encoding="utf-8") as f:
     f.write(annotated_text)
 
-print("Annotated text file saved successfully!")
+print("Files saved successfully!")
