@@ -17,12 +17,14 @@ model_params = {
 booknlp = BookNLP("en", model_params)
 
 # Define input and output paths for BookNLP processing
-input_file = "/yunity/arusty/SoundScribe/text_files/chapter4.txt"
+input_file = "/yunity/arusty/SoundScribe/text_files/Legacy of the Lost.txt"
 output_dir_bnlp = "/yunity/arusty/SoundScribe/book_files"
-book_id = "lotl-chapter4"
+book_id = "lotl"
+original_text_file = "/yunity/arusty/SoundScribe/text_files/Legacy of the Lost.txt"
+
 
 # Process the book (this generates files in output_dir_bnlp)
-booknlp.process(input_file, output_dir_bnlp, book_id)
+#booknlp.process(input_file, output_dir_bnlp, book_id)
 
 ###########################
 # PART 2: Build Coreference Mapping from Entities
@@ -54,7 +56,7 @@ for _, row in person_entities.iterrows():
 resolved_map = {}
 for entity_id, mentions in coref_mentions.items():
     # Filter for proper names (using istitle() as a heuristic)
-    proper_names = [m for m in mentions if m.istitle()]
+    proper_names = [str(m) for m in mentions if isinstance(m, str) and m.istitle()]
     if proper_names:
         # Use the most frequent proper name
         resolved_map[entity_id] = max(set(proper_names), key=proper_names.count)
@@ -73,7 +75,7 @@ print(resolved_map)
 # Adjust the separator and header as needed.
 # Here we assume the quotes file has a header with at least columns:
 # "quote", "char_id", "quote_start", "quote_end"
-quotes_df = pd.read_csv(quotes_file, sep="\t", header=0)
+quotes_df = pd.read_csv(quotes_file, sep="\t", header=0, on_bad_lines='warn')
 
 # Convert char_id to string for mapping
 quotes_df["char_id"] = quotes_df["char_id"].astype(str)
@@ -118,7 +120,6 @@ with open(character_dialogue_file, "w", encoding="utf-8") as f:
 # File 2: Create Annotated Text File
 # ----------------------
 # Read the original text.
-original_text_file = "/yunity/arusty/SoundScribe/text_files/chapter4.txt"
 with open(original_text_file, "r", encoding="utf-8") as f:
     text = f.read()
 
