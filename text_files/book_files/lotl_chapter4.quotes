@@ -1,0 +1,57 @@
+quote_start	quote_end	mention_start	mention_end	mention_phrase	char_id	quote
+18	33	34	35	the vagrant	15	“ Look at that slithering soldier eating in our faces just to mock us , ”
+570	578	579	581	the bigger vagrant	38	“ We should fight him , Terit , ”
+585	591	592	592	Sibier	2	“ Take our food back . ”
+756	760	761	761	he	2	“ I will , ”
+765	773	761	761	he	2	“ I will do it , Father . ”
+826	833	834	834	he	2	“ It ’s pointless , Yorin , ”
+843	856	834	834	he	2	“ We either starve or die at the tip of his sword . ”
+980	989	968	968	Sibier	2	“ Do you think we ’ll survive this ? ”
+1019	1024	1012	1012	his	57	“ Where ’s Ma ? ”
+1288	1297	1283	1283	Sibier	2	“ I ’ll get you both some food . ”
+1306	1315	1298	1298	Yorin	7	“ What are you going to do kid ? ”
+1615	1621	1622	1623	The captain	67	“ Your name , sir ? ”
+1652	1657	1637	1637	He	67	“ Go your way . ”
+1671	1682	1683	1683	he	2	“ I asked for your name , not a retort , ”
+1720	1730	1731	1732	the captain	67	“ It is Captain Werrin to you not sir , ”
+1742	1749	1731	1732	the captain	67	“ Do not disrespect me again . ”
+1785	1802	1779	1779	he	2	“ Give me your food , Sir Werrin , and I will be happy to leave . ”
+1813	1821	1810	1810	Sibier	2	“ You get my scraps , urchin . ”
+1890	1899	1900	1900	he	2	“ That mess back on Earl ’s Road , ”
+1907	1945	1900	1900	he	2	“ You would n’t want reports trickling in that you were in charge , do you ? That you were the one who let the riot unfold , the one who failed to strike down three derelicts ? ”
+1964	1973	1959	1959	Sibier	2	“ You better leave me alone , urchin . ”
+1987	2002	2003	2003	Sibier	2	“ You kill me here and you ’ll look even more like the culprit , ”
+2012	2047	2003	2003	Sibier	2	“ I have friends watching right now who ’d be happy to testify they saw you on Earl ’s Road . I do n’t think any of them would mind being promoted to captain … ”
+2053	2058	2059	2059	Sibier	2	“ You ’re bluffing . ”
+2071	2077	2078	2078	he	2	“ Then call my bluff , ”
+2081	2096	2078	2078	he	2	“ or just give me your food , and I ’ll be on my way ”
+2215	2224	2225	2225	he	2	“ I could use more men like you , ”
+2239	2249	2228	2228	He	2	“ But your threat is a lie , kid . ”
+2285	2288	2289	2289	He	2	“ Here . ”
+2297	2327	2289	2289	He	2	“ Be back here tomorrow at first light , and I ’ll bring your enlistment papers to sign . You wo n’t have to worry about starving any more . ”
+2341	2349	2333	2333	He	2	“ What was your name , kid ? ”
+2350	2353	2328	2328	Sibier	2	“ Sibier . ”
+2354	2359	2360	2360	Sibier	2	“ And your last ? ”
+2399	2406	2407	2407	he	2	“ It 's Sogni , captain , ”
+2431	2448	2449	2449	Sibier	2	“ I had heard that the High Executioner had finally visited the last of the Sogni . ”
+2549	2555	2541	2541	Werrin	10	“ How did you escape ? ”
+2598	2624	2594	2594	Sibier	2	“ I did n’t hear about that . It ’s not my name by birth — I adopted it when David Sogni saved the rebellion . ”
+2632	2637	2638	2638	he	2	“ I was there , ”
+2643	2676	2677	2678	The captain	67	“ David lost his closest friend that day . In his sorrow , he became a tempest of rage , and he had that same look in his eyes that you do . ”
+2681	2693	2694	2694	Sibier	2	“ David never fought again after that . It broke him . ”
+2743	2751	2739	2739	he	2	“ Welcome to the team , Sibier . ”
+2767	2774	2775	2775	He	2	“ I ’ll see you tomorrow . ”
+2873	2879	2880	2882	the burly one	105	“ My name is Yorin , ”
+2904	2907	2908	2909	the other	106	“ Terit , ”
+2914	2920	2921	2921	Sibier	2	“ My name is Terit . ”
+2959	2966	2967	2967	he	2	“ My name is Sibier Sogni , ”
+2970	2996	2997	2997	He	2	“ And I believe we can create something where none of us will go hungry again.¨ Yorin and Terit exchanged glances , their brows raised . “
+3006	3024	3025	3025	Terit	5	” Yorin whispered reverently , only for Terit to interrupt . ¨You can get us more food ? ”
+3043	3046	3047	3047	he	5	“ Maybe , ”
+3057	3076	3047	3047	he	5	“ I have a dream for this kingdom . Do you want to be a part of it ? ”
+3090	3098	3099	3099	Yorin	7	“ The one blessed by the stars … ”
+3108	3113	3099	3099	Yorin	7	“ Who are you ? ”
+3119	3133	3114	3114	Terit	5	“ Yorin spent too much time in jail reading from those dilapidated words , ”
+3135	3138	3139	3139	Yorin	7	“ scriptures , ”
+3147	3158	3159	3159	he	5	“ anyways , he ’s a little gone up here , ”
+3166	3188	3159	3159	he	5	“ To the depths with it all though , because we ’re in … but what 's the plan , kid ? ”
