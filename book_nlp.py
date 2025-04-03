@@ -9,22 +9,21 @@ from booknlp.booknlp import BookNLP
 
 # Define model parameters
 model_params = {
-    "pipeline": "entity,quote,supersense,event,coref",
-    "model": "big"  # You can also try "small" if accuracy improves
+    "pipeline": "entity,quote,coref",
+    "model": "small"  # You can also try "small" if accuracy improves
 }
 
 # Initialize BookNLP with the English language model and parameters
 booknlp = BookNLP("en", model_params)
 
 # Define input and output paths for BookNLP processing
-input_file = "/yunity/arusty/SoundScribe/text_files/Legacy of the Lost.txt"
+input_file = "/yunity/arusty/SoundScribe/text_files/frankenstien.txt"
 output_dir_bnlp = "/yunity/arusty/SoundScribe/book_files"
-book_id = "lotl"
-original_text_file = "/yunity/arusty/SoundScribe/text_files/Legacy of the Lost.txt"
+book_id = "frankenstein"
 
 
 # Process the book (this generates files in output_dir_bnlp)
-#booknlp.process(input_file, output_dir_bnlp, book_id)
+booknlp.process(input_file, output_dir_bnlp, book_id)
 
 ###########################
 # PART 2: Build Coreference Mapping from Entities
@@ -34,7 +33,6 @@ original_text_file = "/yunity/arusty/SoundScribe/text_files/Legacy of the Lost.t
 entities_file = f"{output_dir_bnlp}/{book_id}.entities"   # Entities file from BookNLP
 quotes_file   = f"{output_dir_bnlp}/{book_id}.quotes"       # Quotes file from BookNLP
 
-# Load the entities file (assumes tab-separated and with headers or consistent column order)
 # Expected columns: COREF, start_token, end_token, prop, cat, text
 entities_df = pd.read_csv(entities_file, sep="\t")
 
@@ -56,23 +54,28 @@ for _, row in person_entities.iterrows():
 resolved_map = {}
 for entity_id, mentions in coref_mentions.items():
     # Filter for proper names (using istitle() as a heuristic)
-    proper_names = [str(m) for m in mentions if isinstance(m, str) and m.istitle()]
+    # Exclude common pronouns to prevent them from being selected as a name
+    PRONOUNS = {"I", "he", "his", "she", "her", "they", "their", "you", "your", "we", "us", "them", "my", "ourselves"}
+
+    # Filter out pronouns and keep only valid proper names
+    proper_names = [m for m in mentions if isinstance(m, str) and m.istitle() and m.lower() not in PRONOUNS]
+
     if proper_names:
-        # Use the most frequent proper name
         resolved_map[entity_id] = max(set(proper_names), key=proper_names.count)
     else:
-        # Fall back to the most frequent mention overall
-        resolved_map[entity_id] = max(set(mentions), key=mentions.count)
+        # Try to get a non-pronoun mention [m for m in mentions if m.lower() not in PRONOUNS]
+        non_pronouns = [m for m in mentions if isinstance(m, str) and m.lower() not in PRONOUNS]
+        if non_pronouns:
+            resolved_map[entity_id] = max(set(non_pronouns), key=non_pronouns.count)
+        else:
+            # If everything is a pronoun, fall back to "Unknown"
+            resolved_map[entity_id] = "Unknown"
 
-print("Final Coreference Mapping:")
-print(resolved_map)
 
 ###########################
 # PART 3: Process Quotes and Build Output Files
 ###########################
 
-# Load the quotes file.
-# Adjust the separator and header as needed.
 # Here we assume the quotes file has a header with at least columns:
 # "quote", "char_id", "quote_start", "quote_end"
 quotes_df = pd.read_csv(quotes_file, sep="\t", header=0, on_bad_lines='warn')
@@ -82,16 +85,6 @@ quotes_df["char_id"] = quotes_df["char_id"].astype(str)
 
 # Map char_id to resolved character names using our refined mapping.
 quotes_df["Resolved Speaker"] = quotes_df["char_id"].map(resolved_map)
-
-# (Optional) Define a further refinement function in case the resolved name is still a pronoun.
-def refine_speaker(speaker, coref_map):
-    pronouns = {"he", "his", "she", "her", "they", "their", "my"}
-    if speaker and speaker.lower() in pronouns:
-        return coref_map.get(speaker.lower(), speaker)
-    return speaker
-
-# If you have additional coreference information, you could update the speakers.
-# For now, we'll use the resolved_map result directly.
 quotes_df["Resolved Speaker"] = quotes_df["Resolved Speaker"].fillna("Unknown")
 
 # ----------------------
@@ -120,7 +113,7 @@ with open(character_dialogue_file, "w", encoding="utf-8") as f:
 # File 2: Create Annotated Text File
 # ----------------------
 # Read the original text.
-with open(original_text_file, "r", encoding="utf-8") as f:
+with open(input_file, "r", encoding="utf-8") as f:
     text = f.read()
 
 # We'll use a regex-based method to find quotes in the text.
@@ -149,3 +142,14 @@ with open(audio_text_file, "w", encoding="utf-8") as f:
     f.write(annotated_text)
 
 print("Files saved successfully!")
+
+#Remove all the files outputted into the book_files directory
+for file in os.listdir(output_dir_bnlp):
+    file_path = os.path.join(output_dir_bnlp, file)
+    try:
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+    except Exception as e:
+        print(f'Failed to delete {file_path}. Reason: {e}')
+
+print("Process completed successfully!")
