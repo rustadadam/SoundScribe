@@ -9,12 +9,21 @@ from collections import defaultdict
 # CONFIGURATION
 ###########################
 # S3 bucket names
-S3_INPUT_BUCKET = "raw-book"     
-S3_OUTPUT_BUCKET = "book-text-info"  
+import sys
 
-# S3 key for the input file (this can be passed in as an argument)
-# For example: "raw/frankenstien.txt"
-s3_input_key = "raw/frankenstien.txt"
+# Ensure an S3 key argument is passed when running the script
+if len(sys.argv) < 2:
+    print("Usage: python book_nlp.py <s3_key>")
+    sys.exit(1)
+
+# Get the S3 key from the command-line argument
+s3_input_key = sys.argv[1]
+
+# S3 bucket names
+S3_INPUT_BUCKET = "raw-book"  # Source bucket where text files are uploaded
+S3_OUTPUT_BUCKET = "book-text-info"  # Output bucket where processed files are saved
+
+print(f"Processing file from S3: {s3_input_key}")
 
 # Local paths (we'll use /tmp/ for temporary storage on EC2)
 local_input_file = f"/tmp/{os.path.basename(s3_input_key)}"

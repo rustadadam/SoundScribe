@@ -2,7 +2,8 @@ import pandas as pd
 import re
 import os
 from booknlp.booknlp import BookNLP
-
+S3_INPUT_BUCKET = "raw-book"
+S3_OUTPUT_BUCKET = "book-text-info"
 ###########################
 # PART 1: Run BookNLP
 ###########################
