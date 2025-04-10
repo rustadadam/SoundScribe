@@ -26,14 +26,14 @@ S3_OUTPUT_BUCKET = "book-text-info"  # Output bucket where processed files are s
 print(f"Processing file from S3: {s3_input_key}")
 
 # Local paths (we'll use /tmp/ for temporary storage on EC2)
-local_input_file = f"/tmp/{os.path.basename(s3_input_key)}"
+local_input_file = f"/home/ec2-user/{os.path.basename(s3_input_key)}"
 # BookNLP output directory (local)
-output_dir_bnlp = f"/tmp/booknlp_output"
+output_dir_bnlp = f"/home/ec2-user/booknlp_output"
 # Book ID: use the file name (without extension)
 book_id = os.path.splitext(os.path.basename(local_input_file))[0]
 
 # Directory for final processed outputs
-output_dir = f"/tmp/book-text-info/{book_id}/"
+output_dir = f"/home/ec2-user/book-text-info/{book_id}/"
 os.makedirs(output_dir, exist_ok=True)
 
 # ----------------------
@@ -76,10 +76,10 @@ entities_file = os.path.join(output_dir_bnlp, f"{book_id}.entities")
 quotes_file   = os.path.join(output_dir_bnlp, f"{book_id}.quotes")
 
 # Expected columns: COREF, start_token, end_token, prop, cat, text
-entities_df = pd.read_csv(entities_file, sep="\t")
+person_entities = pd.read_csv(entities_file, sep="\t")
 
 # Filter for person entities (cat == "PER")
-person_entities = entities_df[entities_df["cat"] == "PER"].copy()
+person_entities = person_entities[person_entities["cat"] == "PER"]
 person_entities = person_entities.sort_values(by=["start_token"])
 
 # Build a mapping: For each unique COREF, collect all mentions.
@@ -158,7 +158,7 @@ def replacer(match):
     except StopIteration:
         speaker = "Unknown"
     matched_quote = match.group(0)
-    return f"</{speaker}> {matched_quote}"
+    return f'<google:style name="{speaker}"> {matched_quote} </google:style>' #Text to change to update tags
 
 annotated_text = re.sub(pattern, replacer, text, count=0)
 audio_text_file = os.path.join(output_dir, f"{book_id}-book-audio-text.txt")
@@ -170,7 +170,7 @@ print("Annotated text file created.")
 # PART 4: Upload Final Output Files to S3
 ###########################
 # Define S3 keys/prefixes for final outputs (adjust as needed)
-s3_output_prefix = f"processed/{book_id}/"
+s3_output_prefix = f"{book_id}/"
 upload_to_s3(character_dialogue_file, S3_OUTPUT_BUCKET, os.path.join(s3_output_prefix, os.path.basename(character_dialogue_file)))
 upload_to_s3(audio_text_file, S3_OUTPUT_BUCKET, os.path.join(s3_output_prefix, os.path.basename(audio_text_file)))
 

@@ -18,9 +18,9 @@ model_params = {
 booknlp = BookNLP("en", model_params)
 
 # Define input and output paths for BookNLP processing
-input_file = "/yunity/arusty/SoundScribe/text_files/frankenstien.txt"
+input_file = "/yunity/arusty/SoundScribe/text_files/chapter2.txt"
 output_dir_bnlp = "/yunity/arusty/SoundScribe/book_files"
-book_id = "frankenstein"
+book_id = "chapter2"
 
 
 # Process the book (this generates files in output_dir_bnlp)
