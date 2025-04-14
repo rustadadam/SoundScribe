@@ -188,4 +188,12 @@ for file in os.listdir(output_dir_bnlp):
     except Exception as e:
         print(f"Failed to delete {file_path}. Reason: {e}")
 
+for file in os.listdir(S3_OUTPUT_BUCKET):
+    file_path = os.path.join(S3_OUTPUT_BUCKET, file)
+    try:
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+    except Exception as e:
+        print(f"Failed to delete {file_path}. Reason: {e}")
+
 print("Process completed successfully!")
