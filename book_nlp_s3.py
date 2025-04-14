@@ -158,7 +158,8 @@ def replacer(match):
     except StopIteration:
         speaker = "Unknown"
     matched_quote = match.group(0)
-    return f'<google:style name="{speaker}"> {matched_quote} </google:style>' #Text to change to update tags
+    return f"</{speaker}> {matched_quote}" #original
+    #return f'<google:style name="{speaker}"> {matched_quote} </google:style>' #Text to change to update tags
 
 annotated_text = re.sub(pattern, replacer, text, count=0)
 audio_text_file = os.path.join(output_dir, f"{book_id}-book-audio-text.txt")
