@@ -11,7 +11,8 @@ lambda.py
 book_nlp.py
 - Same as book_nlp_s3.py but disconnected from AWS. Able to run locally. 
 
-
+## book-text-info
+Contains the information outputed by the book_nlp. These files can be inspected for more information on outputs. 
 
 ## Authors
 Adam Rustad
