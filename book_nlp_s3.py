@@ -25,7 +25,7 @@ S3_OUTPUT_BUCKET = "book-text-info"  # Output bucket where processed files are s
 
 print(f"Processing file from S3: {s3_input_key}")
 
-# Local paths (we'll use /tmp/ for temporary storage on EC2)
+# Local paths 
 local_input_file = f"/home/ec2-user/{os.path.basename(s3_input_key)}"
 # BookNLP output directory (local)
 output_dir_bnlp = f"/home/ec2-user/booknlp_output"
@@ -58,7 +58,7 @@ download_from_s3(S3_INPUT_BUCKET, s3_input_key, local_input_file)
 # Define model parameters for BookNLP
 model_params = {
     "pipeline": "entity,quote,coref",
-    "model": "small"  # "small" to help with resource constraints; adjust if needed
+    "model": "small"  # "small" to help with resource constraints; more accurate
 }
 
 # Initialize BookNLP with the English language model and parameters
@@ -182,6 +182,14 @@ print("Final output files uploaded to S3.")
 ###########################
 for file in os.listdir(output_dir_bnlp):
     file_path = os.path.join(output_dir_bnlp, file)
+    try:
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+    except Exception as e:
+        print(f"Failed to delete {file_path}. Reason: {e}")
+
+for file in os.listdir(S3_OUTPUT_BUCKET):
+    file_path = os.path.join(S3_OUTPUT_BUCKET, file)
     try:
         if os.path.isfile(file_path):
             os.remove(file_path)
