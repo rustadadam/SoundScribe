@@ -15,6 +15,7 @@ export function FileUploader() {
   const [status, setStatus] = useState<Status>("idle")
   const [progress, setProgress] = useState(0)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [message, setMessage] = useState<string>("")
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -28,38 +29,45 @@ export function FileUploader() {
     e.preventDefault()
     if (!file) return
 
-    // Simulate the upload and processing
-    setStatus("uploading")
-    setProgress(0)
+    try {
+      // Start upload process
+      setStatus("uploading")
+      setProgress(20)
 
-    // Simulate upload progress
-    const uploadInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 40) {
-          clearInterval(uploadInterval)
-          simulateProcessing()
-          return 40
-        }
-        return prev + 5
-      })
-    }, 200)
+      // Read the file content
+      const content = await file.text()
+      const payload = { filename: file.name, content }
 
-    const simulateProcessing = () => {
+      // Update progress to show we're about to send to AWS
+      setProgress(40)
       setStatus("processing")
+      
+      // Send to AWS endpoint
+      const resp = await fetch("https://gte5mt9vw3.execute-api.us-east-1.amazonaws.com/dev/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
 
-      // Simulate processing progress
-      const processInterval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(processInterval)
-            setStatus("complete")
-            // Mock audio URL
-            setAudioUrl(`${file.name.replace(".txt", "")}.mp3`)
-            return 100
-          }
-          return prev + 5
-        })
-      }, 200)
+      // Process response
+      const data = await resp.json()
+
+      if (resp.ok) {
+        // Success
+        setProgress(100)
+        setStatus("complete")
+        setAudioUrl(`${file.name.replace(".txt", "")}.mp3`)
+      } else {
+        // API returned an error
+        setStatus("error")
+        setMessage(`Error: ${data.message}`)
+        console.error("Upload error:", data.message)
+      }
+    } catch (err) {
+      // Network or other error
+      setStatus("error")
+      setMessage(`Network error: ${err}`)
+      console.error("Network error:", err)
     }
   }
 
@@ -68,6 +76,7 @@ export function FileUploader() {
     setStatus("idle")
     setProgress(0)
     setAudioUrl(null)
+    setMessage("")
   }
 
   return (
@@ -217,7 +226,9 @@ export function FileUploader() {
                 </div>
                 <div className="space-y-2 text-center">
                   <h3 className="text-lg font-medium">Something went wrong</h3>
-                  <p className="text-sm text-slate-500">There was an error processing your file. Please try again.</p>
+                  <p className="text-sm text-slate-500">
+                    {message || "There was an error processing your file. Please try again."}
+                  </p>
                 </div>
                 <Button variant="outline" onClick={resetForm} className="w-full">
                   Try Again
@@ -230,4 +241,3 @@ export function FileUploader() {
     </section>
   )
 }
-
