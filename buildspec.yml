@@ -1,0 +1,16 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - pip install -r requirements.txt
+  build:
+    commands:
+      - pytest tests/           # run your unit tests
+      - zip -r deploy.zip .     # package up your Lambda(s)
+
+artifacts:
+  files:
+    - deploy.zip
